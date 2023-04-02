@@ -1,6 +1,9 @@
-import db
 import csv
-from models import card
+
+import db
+from db_models_manager import fetchone
+from models import *
+
 
 def load_person(path):
     with open(path, 'r') as file:
@@ -17,6 +20,7 @@ def load_person(path):
                 }
             )
 
+
 def load_card_tasks(path):
     with open(path, 'r') as file:
         reader = csv.DictReader(file, delimiter=';',
@@ -30,7 +34,6 @@ def load_card_tasks(path):
         deadline = list(filter(None, deadline_list))[0]
         TASK_LIST = list(filter(None, task_list))
         db.insert('Card', {'name': card_name, 'deadline': deadline})
-        card_id = card.get_one(name=card_name, deadline=deadline).id
+        card_id = fetchone(Card, name=card_name, deadline=deadline).id
         for t in TASK_LIST:
             db.insert('Task', {'card_id': card_id, 'name': t})
-

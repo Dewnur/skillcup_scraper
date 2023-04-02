@@ -5,9 +5,8 @@ from selenium import webdriver
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 
-from models import card, person
-from models.card import Card
-from models.person import PersonCard
+from db_models_manager import *
+from models import *
 
 URL_LOGIN = 'https://oauth-vamvtg.skillcup.ru/login'
 
@@ -206,8 +205,8 @@ def start_parse(save_path: str, crd: Card):  # Передавать карточ
         time.sleep(4)
         login(driver)
         time.sleep(4)
-        person_list = person.get_all()
-        task_name_list = [c.name for c in card.get_tasks_by_card(crd.id)]
+        person_list = fetchall(Person)
+        tasks_by_card = [c.name for c in fetchall(Task, card_id=crd.id)]
         for psn in person_list:
             driver.get(url=URL_DASHBOARD)  # Открыть дашборд
             sleep_while(False, "[class='sc-preloader']")  # Экран загрузки "Авторизация"
@@ -230,7 +229,8 @@ def start_parse(save_path: str, crd: Card):  # Передавать карточ
             open_card(crd)
             time.sleep(1)
             print(psn.name)
-            row_dict = get_row_dict(psn.name, task_name_list)  # Сюда передать карточку
+            row_dict = get_row_dict(psn.name, tasks_by_card)  # Сюда передать карточку
+
             if not check_open_card():  # Поиск в `Задано`
                 click_dropdown(0)
                 open_card(crd)
@@ -240,11 +240,12 @@ def start_parse(save_path: str, crd: Card):  # Передавать карточ
                 open_card(crd)
                 time.sleep(1)
             if not check_open_card():  # Нет ответа не на одно задание
-                write_row_csv(set_row_dict_total(row_dict, task_name_list), save_path)
+                write_row_csv(set_row_dict_total(row_dict, tasks_by_card), save_path)
+
                 continue
             time.sleep(1)
             row_dict = card_parse(row_dict, crd.id, psn.id)
-            write_row = set_row_dict_total(row_dict, task_name_list)
+            write_row = set_row_dict_total(row_dict, tasks_by_card)
             write_row_csv(write_row, save_path)
 
         time.sleep(10)
