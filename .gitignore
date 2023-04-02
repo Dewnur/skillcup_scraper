@@ -8,5 +8,6 @@ template/
 *.csv
 *.iml
 doc/
-db/
+*.db
 chromedriver/
+*.md
