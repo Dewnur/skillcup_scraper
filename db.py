@@ -22,7 +22,7 @@ def insert(table: str, column_values: Dict) -> None:
 def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List[Dict]:
     columns_joined = ", ".join(columns)
     if values:
-        condition = [f"{col}='{val}'" for col, val in values]
+        condition = [f"{col}='{val}'" if val else f"{col} IS NULL" for col, val in values]
         condition = ' AND '.join(condition)
         cursor.execute(f"SELECT {columns_joined} FROM {table} WHERE {condition}")
     else:
