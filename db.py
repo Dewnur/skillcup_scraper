@@ -7,7 +7,7 @@ conn = sqlite3.connect(os.path.join("", "db/database.db"))
 cursor = conn.cursor()
 
 
-def insert(table: str, column_values: Dict):
+def insert(table: str, column_values: Dict) -> None:
     columns = ', '.join(column_values.keys())
     values = [tuple(column_values.values())]
     placeholders = ", ".join("?" * len(column_values.keys()))
@@ -43,7 +43,7 @@ def delete(table: str, row_id: int) -> None:
     conn.commit()
 
 
-def update(table: str, row_id: int, column_values: Dict):
+def update(table: str, row_id: int, column_values: Dict) -> None:
     columns = ', '.join(column_values.keys())
     values = tuple(column_values.values()) + (row_id,)
     placeholders = ", ".join("?" * len(column_values.keys()))

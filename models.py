@@ -9,9 +9,9 @@ class Task(NamedTuple):
 
 
 class Card(NamedTuple):
-    id: int
     name: str
     deadline: str
+    id: int = None
     deadline_datetime: int = None
 
 

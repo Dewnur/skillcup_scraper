@@ -1,5 +1,5 @@
-from homework_parser import start_parse
-from models.card import Card
+from parser import start_parse
+from models import *
 from db_models_manager import *
 
 

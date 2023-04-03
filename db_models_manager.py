@@ -31,3 +31,18 @@ def fetchone(cls: Type[T], **kwargs) -> T:
     obj = cls(**record)
 
     return obj
+
+
+def insert(obj: T) -> None:
+    table_name = type(obj).__name__
+    db.insert(table_name, obj._asdict())
+
+
+def update(obj: T, **kwargs) -> None:
+    table_name = type(obj).__name__
+    db.update(table_name, obj.id, kwargs)
+
+
+def delete(obj: T) -> None:
+    table_name = type(obj).__name__
+    db.delete(table_name, obj.id)
