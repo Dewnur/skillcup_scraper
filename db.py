@@ -1,9 +1,9 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import sqlite3
 
-conn = sqlite3.connect(os.path.join("", "db/database.db"))
+conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "db/database.db"))
 cursor = conn.cursor()
 
 
@@ -19,7 +19,7 @@ def insert(table: str, column_values: Dict) -> None:
     conn.commit()
 
 
-def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List[Dict]:
+def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List[Dict] | None:
     columns_joined = ", ".join(columns)
     if values:
         condition = [f"{col}='{val}'" if val else f"{col} IS NULL" for col, val in values]
@@ -29,12 +29,33 @@ def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List
         cursor.execute(f"SELECT {columns_joined} FROM {table}")
     rows = cursor.fetchall()
     result = []
-    for row in rows:
+    if rows:
+        for row in rows:
+            dict_row = {}
+            for index, column in enumerate(columns):
+                dict_row[column] = row[index]
+            result.append(dict_row)
+        return result
+    else:
+        return None
+
+
+def fetchone(table: str, columns: List[str], values: List[Tuple] = None) -> Dict | None:
+    columns_joined = ", ".join(columns)
+    if values:
+        condition = [f"{col}='{val}'" if val else f"{col} IS NULL" for col, val in values]
+        condition = ' AND '.join(condition)
+        cursor.execute(f"SELECT {columns_joined} FROM {table} WHERE {condition}")
+    else:
+        cursor.execute(f"SELECT {columns_joined} FROM {table}")
+    row = cursor.fetchone()
+    if row:
         dict_row = {}
         for index, column in enumerate(columns):
             dict_row[column] = row[index]
-        result.append(dict_row)
-    return result
+        return dict_row
+    else:
+        return None
 
 
 def delete(table: str, row_id: int) -> None:
