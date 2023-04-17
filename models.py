@@ -12,29 +12,29 @@ class Card(NamedTuple):
     name: str
     deadline: str
     id: int = None
-    deadline_datetime: int = None
+    ts_deadline: float = None
 
 
 class PersonCard(NamedTuple):
     person_id: int
     card_id: int
-    total: int = None
-    total_string: str = ''
+    is_done: int = 0
+    total_done: str = '0'
     id: int = None
 
 
 class Person(NamedTuple):
-    id: int
     name: str
-    rate: str
-    tg_url: str
-    tg_name: str
+    id: int = None
+    rate: str = ''
+    tg_url: str = ''
+    tg_name: str = ''
 
 
 class Comment(NamedTuple):
-    id: int
     task_id: int
     person_id: int
     content: str
     overdue: bool
-    create_datetime: datetime
+    ts_create: float
+    id: int = None
