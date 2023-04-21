@@ -5,7 +5,7 @@ import db
 T = TypeVar('T', bound=NamedTuple)
 
 
-def fetchall(cls: Type[T], **kwargs) -> List[T]:
+def fetchall(cls: Type[T], **kwargs) -> List[T] | None:
     condition = []
     objects_list = []
     for key, value in kwargs.items():
@@ -13,10 +13,13 @@ def fetchall(cls: Type[T], **kwargs) -> List[T]:
     fields = [field for field in cls._fields]
     table_name = cls.__name__
     records = db.fetchall(table_name, fields, condition)
-    for record in records:
-        obj = cls(**record)
-        objects_list.append(obj)
-    return objects_list
+    if records:
+        for record in records:
+            obj = cls(**record)
+            objects_list.append(obj)
+        return objects_list
+    else:
+        return None
 
 
 def fetchone(cls: Type[T], **kwargs) -> Any | None:
