@@ -9,10 +9,10 @@ def replace_string(text: str) -> str:
     return result
 
 
-def string_to_timestamp(date_string: str, date_format: str = "%d.%m.%Y") -> float:
+def string_to_timestamp(date_string: str, date_format: str = "%d.%m.%Y") -> int:
     date_string = replace_string(date_string)
     date_object = datetime.datetime.strptime(date_string, date_format)
-    timestamp = datetime.datetime.timestamp(date_object)
+    timestamp = int(datetime.datetime.timestamp(date_object))
     return timestamp
 
 
