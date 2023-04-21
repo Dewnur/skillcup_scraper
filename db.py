@@ -19,10 +19,30 @@ def insert(table: str, column_values: Dict) -> None:
     conn.commit()
 
 
+def update(table: str, row_id: int, column_values: Dict) -> None:
+    columns = ', '.join(column_values.keys())
+    values = tuple(column_values.values()) + (row_id,)
+    placeholders = ", ".join("?" * len(column_values.keys()))
+    cursor.execute(
+        f"UPDATE {table} "
+        f"SET ({columns}) "
+        f"= ({placeholders}) "
+        f"WHERE id = ?",
+        values)
+    conn.commit()
+
+
+def delete(table: str, row_id: int) -> None:
+    row_id = int(row_id)
+    cursor.execute(f"delete from {table} where id={row_id}")
+    conn.commit()
+
+
 def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List[Dict] | None:
     columns_joined = ", ".join(columns)
     if values:
-        condition = [f"{col}='{val}'" if val else f"{col} IS NULL" for col, val in values]
+        new_values = [(col, f"\'{val}\'") if type(val) == str else (col, val) for col, val in values]
+        condition = [f"{col}={val}" if val is not None else f"{col} IS NULL" for col, val in new_values]
         condition = ' AND '.join(condition)
         cursor.execute(f"SELECT {columns_joined} FROM {table} WHERE {condition}")
     else:
@@ -43,7 +63,8 @@ def fetchall(table: str, columns: List[str], values: List[Tuple] = None) -> List
 def fetchone(table: str, columns: List[str], values: List[Tuple] = None) -> Dict | None:
     columns_joined = ", ".join(columns)
     if values:
-        condition = [f"{col}='{val}'" if val else f"{col} IS NULL" for col, val in values]
+        new_values = [(col, f"\'{val}\'") if type(val) == str else (col, val) for col, val in values]
+        condition = [f"{col}={val}" if val is not None else f"{col} IS NULL" for col, val in new_values]
         condition = ' AND '.join(condition)
         cursor.execute(f"SELECT {columns_joined} FROM {table} WHERE {condition}")
     else:
@@ -56,25 +77,6 @@ def fetchone(table: str, columns: List[str], values: List[Tuple] = None) -> Dict
         return dict_row
     else:
         return None
-
-
-def delete(table: str, row_id: int) -> None:
-    row_id = int(row_id)
-    cursor.execute(f"delete from {table} where id={row_id}")
-    conn.commit()
-
-
-def update(table: str, row_id: int, column_values: Dict) -> None:
-    columns = ', '.join(column_values.keys())
-    values = tuple(column_values.values()) + (row_id,)
-    placeholders = ", ".join("?" * len(column_values.keys()))
-    cursor.execute(
-        f"UPDATE {table} "
-        f"SET ({columns}) "
-        f"= ({placeholders}) "
-        f"WHERE id = ?",
-        values)
-    conn.commit()
 
 
 def get_cursor():
