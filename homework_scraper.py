@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from db_models_manager import *
 from models import *
 from tools.date_preprocessor import *
+from selenium.webdriver.chrome.service import Service
 
 # TODO: Вынести в переменные окружения
 URL_LOGIN = 'https://oauth-vamvtg.skillcup.ru/login'
@@ -18,8 +19,9 @@ options = webdriver.ChromeOptions()
 # options.add_argument(fake_useragent.UserAgent().random)
 options.add_argument("--headless")
 # TODO: Сделать отдельный модуль для инициализации driver
+s = Service('Users\Dewnur\Desktop\skill_pars\chromedriver\chromedriver.exe')
 driver = webdriver.Chrome(
-    executable_path=r'Users\Dewnur\Desktop\skill_pars\chromedriver\chromedriver.exe',
+    service=s,
     options=options
 )
 
@@ -62,10 +64,12 @@ def start_scraping_homework(card: Card):  # Передавать карточк�
             open_card(card)
             time.sleep(1)
             print(person.name)
-            person_card = fetchone(PersonCard, person_id=person.id, card_id=card.id)
-            if not person_card:
-                person_card = PersonCard(person_id=person.id, card_id=card.id)
-                insert(person_card)
+            person_card = {
+                'person_id': person.id,
+                'card_id': card.id,
+            }
+            if not fetchone(PersonCard, **person_card):
+                insert(PersonCard(**person_card))
             if not check_open_card():  # Поиск в `Задано`
                 click_dropdown(0)
                 open_card(card)
@@ -77,13 +81,16 @@ def start_scraping_homework(card: Card):  # Передавать карточк�
             if not check_open_card():  # Нет ответа не на одно задание
                 continue
             time.sleep(1)
+            person_card = fetchone(PersonCard, **person_card)
             extract_card(person_card)
+            counting_completed_tasks(person_card)
         time.sleep(10)
     except Exception as ex:
         print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
-
-# TODO: Написать функцию для заполнения полей is_done и total_done у personCard
 
 def check_open_card() -> bool:
     """Проверяет, открыта ли карточка с заданиями"""
@@ -175,7 +182,7 @@ def extract_comments(task: Task, person_card: PersonCard) -> None:
 def sleep_while(exist: bool, css_selector: str, time_sleep=1, upper_node=None) -> None:
     """
     Создает задержку для прогрузки элементов страницы
-    :param exist: True - Ждать пока элемент не появится, False - Ждать пока элемент существует
+    exist: True - Ждать пока элемент не появится, False - Ждать пока элемент существует
     """
     while True:
         elem = None
@@ -201,7 +208,7 @@ def safe_click(css_selector: str, num_retries: int, time_sleep=1) -> None:
                 raise Exception('Ошибка клика')
 
 
-def set_person_card_done(person_card: PersonCard):
+def counting_completed_tasks(person_card: PersonCard):
     tasks = fetchall(Task, card_id=person_card.card_id)
     if tasks is None:
         raise TypeError
@@ -213,7 +220,7 @@ def set_person_card_done(person_card: PersonCard):
             comments.extend(coms)
     count_person_tasks = len(list(set([com.task_id for com in comments if com.task_id is not None])))
     is_done = 1 if len(tasks) == count_person_tasks else 0
-    total_done = card.index_number if len(tasks) == count_person_tasks else f'{count_person_tasks}из{len(tasks)}'
+    total_done = card.sequence_number if len(tasks) == count_person_tasks else f'{count_person_tasks}из{len(tasks)}'
     update(
         person_card,
         is_done=is_done,
