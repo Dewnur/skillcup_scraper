@@ -3,11 +3,4 @@ __pycache__/
 *$py.class
 .idea
 venv
-results/
-template/
-*.csv
 *.iml
-doc/
-*.db
-chromedriver/
-*.md
