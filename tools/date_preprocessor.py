@@ -20,3 +20,11 @@ def timestamp_to_string(timestamp: float, date_format: str = "%d.%m.%Y") -> str:
     date_object = datetime.datetime.fromtimestamp(timestamp)
     date_string = date_object.strftime(date_format)
     return date_string
+
+
+def remove_duplicates(lst):
+    result = []
+    for item in lst:
+        if item not in result:
+            result.append(item)
+    return result
