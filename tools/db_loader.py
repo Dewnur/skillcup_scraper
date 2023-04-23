@@ -1,39 +1,44 @@
 import csv
 
-import db
-from db_models_manager import fetchone
+from db_models_manager import *
 from models import *
+from tools.date_preprocessor import string_to_timestamp
 
 
-def load_person(path):
+def load_person(path: str) -> None:
     with open(path, 'r') as file:
-        reader = csv.DictReader(file, delimiter=';',
-                                quoting=csv.QUOTE_MINIMAL)
+        reader = csv.DictReader(file, delimiter=';', quoting=csv.QUOTE_MINIMAL)
         for row in reader:
-            db.insert(
-                'Person',
-                {
-                    'name': row['name'],
-                    'rate': row['rate'],
-                    'tg_url': row['tg_url'],
-                    'tg_name': row['tg_name']
-                }
-            )
+            person_dict = {
+                'name': row['name'],
+                'rate': row['rate'],
+                'tg_url': row['tg_url'],
+                'tg_name': row['tg_name'],
+                'subscriber_count': row['subscriber_count'],
+            }
+            person = fetchone(Person, name=person_dict['name'])
+            if person:
+                update(person, **person_dict)
+            else:
+                insert(Person(**person_dict))
 
 
-def load_card_tasks(path):
+def load_cards(path: str) -> None:
     with open(path, 'r') as file:
-        reader = csv.DictReader(file, delimiter=';',
-                                quoting=csv.QUOTE_MINIMAL)
-        card_name_list, deadline_list, task_list = [], [], []
+        reader = csv.DictReader(file, delimiter=';', quoting=csv.QUOTE_MINIMAL)
         for row in reader:
-            card_name_list.append(row['card_name'])
-            deadline_list.append(row['deadline'])
-            task_list.append(row['task'])
-        card_name = list(filter(None, card_name_list))[0]
-        deadline = list(filter(None, deadline_list))[0]
-        TASK_LIST = list(filter(None, task_list))
-        db.insert('Card', {'name': card_name, 'deadline': deadline})
-        card_id = fetchone(Card, name=card_name, deadline=deadline).id
-        for t in TASK_LIST:
-            db.insert('Task', {'card_id': card_id, 'name': t})
+            card_dict = {
+                'name': row['name'],
+                'deadline_date': row['deadline_date'],
+                'deadline_time': row['deadline_time'],
+                'ts_deadline': string_to_timestamp(
+                    f"{row['deadline_date']} {row['deadline_time']}",
+                    date_format='%d.%m.%Y %H:%M'
+                ),
+                'sequence_number': row['sequence_number'],
+            }
+            cars = fetchone(Card, sequence_number=card_dict['sequence_number'])
+            if cars:
+                update(cars, **card_dict)
+            else:
+                insert(Card(**card_dict))

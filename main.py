@@ -1,17 +1,26 @@
 from db_models_manager import *
 from homework_scraper import start_scraping_homework
 from models import *
+from tools.db_loader import load_person, load_cards
 from word_report_generator import WordReportGenerator
-from homework_scraper import driver
+
 # TODO: Перед запуском новой партии обновить даты и ts у карточек
 
 if __name__ == "__main__":
-    # start_scraping_homework(fetchone(Card, name='Активное продвижение', deadline_date='05.03.2023'))
-
-    persons = fetchall(Person)
-    for person in persons:
-        wrp = WordReportGenerator(f'results/{person.name}.docx')
-        wrp.generate_report(person)
-
-    driver.close()
-    driver.quit()
+    scraping = True
+    report = True
+    loader = False
+    card_scraping = fetchone(Card, name='Домашнее задание', deadline_date='23.04.2023')
+    if card_scraping is None:
+        raise Exception("Карточка не найдена")
+    if scraping:
+        start_scraping_homework(card_scraping)
+    if report:
+        persons = fetchall(Person)
+        for person in persons:
+            cards = fetchall(Card, **card_scraping._asdict())
+            wrp = WordReportGenerator(f'results/', cards=cards)
+            wrp.generate_report(person)
+    if loader:
+        load_person('template/persons-4.csv')
+        load_cards('template/cards-4.csv')

@@ -13,11 +13,19 @@ from models import *
 from tools.text_preprocessor import comment_tokens
 
 
+def _split_text_and_link(s: str):
+    pattern = r'(https?://[^\s]+)'
+    result = re.split(pattern, s)
+    return result
+
+
 class WordReportGenerator:
 
-    def __init__(self, path: str):
-        self.path = path
+    def __init__(self, path_dir: str, cards: List[Card]):
+        self.path_dir = path_dir
         self._doc = Document()
+        self.cards = sorted(cards, key=lambda card: card.sequence_number)
+        self._filename_extension = '.docx'
 
     def _init_styles(self):
         header_style = self._doc.styles.add_style('Header1', WD_STYLE_TYPE.PARAGRAPH)
@@ -26,21 +34,21 @@ class WordReportGenerator:
         header_style.font.bold = True
         header_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         header_style.paragraph_format.left_indent = Mm(-3)
-        homework_title = self._doc.styles.add_style('homework_title', WD_STYLE_TYPE.PARAGRAPH)
-        homework_title.font.name = 'Times New Roman'
-        homework_title.font.size = Pt(12)
-        homework_title.font.bold = True
-        homework_title.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        homework_task_name = self._doc.styles.add_style('homework_task_name', WD_STYLE_TYPE.PARAGRAPH)
-        homework_task_name.font.name = 'Roboto'
-        homework_task_name.font.size = Pt(11)
-        homework_task_name.font.bold = True
-        homework_task_name.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        comment = self._doc.styles.add_style('comment', WD_STYLE_TYPE.PARAGRAPH)
-        comment.font.name = 'Arial'
-        comment.font.size = Pt(11)
-        comment.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-        comment.paragraph_format.left_indent = Mm(-10)
+        title_style = self._doc.styles.add_style('title_style', WD_STYLE_TYPE.PARAGRAPH)
+        title_style.font.name = 'Times New Roman'
+        title_style.font.size = Pt(12)
+        title_style.font.bold = True
+        title_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        task_name_style = self._doc.styles.add_style('task_name_style', WD_STYLE_TYPE.PARAGRAPH)
+        task_name_style.font.name = 'Roboto'
+        task_name_style.font.size = Pt(11)
+        task_name_style.font.bold = True
+        task_name_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        comment_style = self._doc.styles.add_style('comment_style', WD_STYLE_TYPE.PARAGRAPH)
+        comment_style.font.name = 'Arial'
+        comment_style.font.size = Pt(11)
+        comment_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+        comment_style.paragraph_format.left_indent = Mm(-10)
 
     def generate_report(self, person: Person):
         self._init_styles()
@@ -48,23 +56,22 @@ class WordReportGenerator:
         self._add_hyperlink(header, text=f'{person.tg_url}', url=f'{person.tg_url}', color='0000FF', underline=False)
         punc = '________'
         header.add_run(f'\n{punc * 10}')
-        cards = fetchall(Card)
-        sorted_cards = sorted(cards, key=lambda card: card.sequence_number)
-        for card in sorted_cards:
-            self._doc.add_paragraph(f'ДОМАШКА {card.sequence_number}:', style='homework_title')
+        save_path = ''
+        for card in self.cards:
+            self._doc.add_paragraph(f'ДОМАШКА {card.sequence_number}:', style='title_style')
             tasks = fetchall(Task, card_id=card.id)
             sorted_tasks = sorted(tasks, key=lambda task: task.sequence_number)
             for task in sorted_tasks:
-                self._doc.add_paragraph(f'{task.name}:', style='homework_task_name')
+                self._doc.add_paragraph(f'{task.name}:', style='task_name_style')
                 comments = fetchall(Comment, task_id=task.id, person_id=person.id)
                 if comments is None:
-                    self._doc.add_paragraph(f'Нет ответа', style='comment')
+                    self._doc.add_paragraph(f'Нет ответа', style='comment_style')
                     continue
                 sorted_comments = sorted(comments, key=lambda comment: comment.sequence_number)
                 content_list = [comment.content for comment in sorted_comments]
                 content = '\n'.join(content_list)
                 content_tokens = comment_tokens(content)
-                comment_paragraph = self._doc.add_paragraph(f'', style='comment')
+                comment_paragraph = self._doc.add_paragraph(f'', style='comment_style')
                 for substring, link in content_tokens:
                     if link:
                         self._add_hyperlink(
@@ -76,8 +83,13 @@ class WordReportGenerator:
                         )
                     else:
                         comment_paragraph.add_run(f'{substring}')
+            person_card = fetchone(PersonCard, person_id=person.id, card_id=card.id)
+            save_path = self.path_dir + f'{person.name}'
+            if person_card.total_done is not None:
+                save_path += f' {person_card.total_done}'
+            save_path += self._filename_extension
 
-        self._doc.save(self.path)
+        self._doc.save(save_path)
 
     def _add_hyperlink(self, paragraph, text, url, color, underline):
         # This gets access to the document.xml.rels file and gets a new relation id value
@@ -113,8 +125,3 @@ class WordReportGenerator:
 
         paragraph._p.append(hyperlink)
         return hyperlink
-
-    def _split_text_and_link(self, s: str):
-        pattern = r'(https?://[^\s]+)'
-        result = re.split(pattern, s)
-        return result
