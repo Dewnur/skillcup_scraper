@@ -62,14 +62,14 @@ class WordReportGenerator:
             tasks = fetchall(Task, card_id=card.id)
             sorted_tasks = sorted(tasks, key=lambda task: task.sequence_number)
             for task in sorted_tasks:
-                self._doc.add_paragraph(f'{task.name}:', style='task_name_style')
+                self._doc.add_paragraph(f'{task.name}', style='task_name_style')
                 comments = fetchall(Comment, task_id=task.id, person_id=person.id)
                 if comments is None:
                     self._doc.add_paragraph(f'Нет ответа', style='comment_style')
                     continue
                 sorted_comments = sorted(comments, key=lambda comment: comment.sequence_number)
                 content_list = [comment.content for comment in sorted_comments]
-                content = '\n'.join(content_list)
+                content = ' '.join(content_list)
                 content_tokens = comment_tokens(content)
                 comment_paragraph = self._doc.add_paragraph(f'', style='comment_style')
                 for substring, link in content_tokens:
@@ -88,40 +88,25 @@ class WordReportGenerator:
             if person_card.total_done is not None:
                 save_path += f' {person_card.total_done}'
             save_path += self._filename_extension
-
         self._doc.save(save_path)
 
-    def _add_hyperlink(self, paragraph, text, url, color, underline):
-        # This gets access to the document.xml.rels file and gets a new relation id value
+    def _add_hyperlink(self, paragraph, text: str, url: str, color: str, underline: bool) -> None:
         part = paragraph.part
         r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
-
-        # Create the w:hyperlink tag and add needed values
         hyperlink = docx.oxml.shared.OxmlElement('w:hyperlink')
         hyperlink.set(docx.oxml.shared.qn('r:id'), r_id, )
-
-        # Create a w:r element
         new_run = docx.oxml.shared.OxmlElement('w:r')
-
-        # Create a new w:rPr element
         rPr = docx.oxml.shared.OxmlElement('w:rPr')
-
-        # Add color if it is given
         if not color is None:
             c = docx.oxml.shared.OxmlElement('w:color')
             c.set(docx.oxml.shared.qn('w:val'), color)
             rPr.append(c)
-
-        # Remove underlining if it is requested
         if not underline:
             u = docx.oxml.shared.OxmlElement('w:u')
             u.set(docx.oxml.shared.qn('w:val'), 'single')
             rPr.append(u)
-
-        # Join all the xml elements together add add the required text to the w:r element
         new_run.append(rPr)
         new_run.text = text
         hyperlink.append(new_run)
-
         paragraph._p.append(hyperlink)
         return hyperlink
