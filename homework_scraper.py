@@ -161,9 +161,12 @@ def extract_comments(task: Task, person_card: PersonCard) -> None:
         comment_text = com.find_element(By.CSS_SELECTOR, "[class='comment-list__text']").text
         comment_date = com.find_element(By.CSS_SELECTOR, "[class='comment-list__date']").text
         comments_list.append((comment_text, comment_date))
-    comments_list = list(set(comments_list))
-    comments_list.reverse()
-    for i, (content, date) in enumerate(comments_list):
+    new_comments_list = []
+    for el in comments_list:
+        if el not in new_comments_list:
+            new_comments_list.append(el)
+    new_comments_list.reverse()
+    for i, (content, date) in enumerate(new_comments_list):
         ts_create = string_to_timestamp(date, "%d.%m.%Y %H:%M")
         overdue = True if ts_create > ts_deadline else False
         new_comment_dict = {
