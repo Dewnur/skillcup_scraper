@@ -26,11 +26,13 @@ def comment_tokens(comment: str) -> list:
     left_substring = comment
     tokens = []
     if links_clear:
+        index = 0
         for link in links_clear:
             index = left_substring.find(link)
             tokens.append((left_substring[:index], 0))
             tokens.append((link, 1))
             left_substring = left_substring[index + len(link):]
+        tokens.append((left_substring, 0))
         return tokens
     return [(comment, 0)]
 

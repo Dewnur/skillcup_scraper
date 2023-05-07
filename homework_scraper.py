@@ -18,6 +18,7 @@ options = webdriver.ChromeOptions()
 
 # options.add_argument(fake_useragent.UserAgent().random)
 options.add_argument("--headless")
+
 # TODO: Сделать отдельный модуль для инициализации driver
 s = Service('Users\Dewnur\Desktop\skill_pars\chromedriver\chromedriver.exe')
 driver = webdriver.Chrome(
@@ -35,7 +36,7 @@ def login():
     driver.find_element(By.CLASS_NAME, 'button').click()
 
 
-def start_scraping_homework(card: Card):  # Передавать карточку
+def start_scraping_homework(card: Card, persons: List[Person] = fetchall(Person)):  # Передавать карточку
     try:
         driver.get(url=URL_LOGIN)
         time.sleep(4)
