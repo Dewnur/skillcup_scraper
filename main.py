@@ -8,9 +8,9 @@ from word_report_generator import WordReportGenerator
 # TODO: Перед запуском новой партии обновить даты и ts у карточек
 
 if __name__ == "__main__":
-    scraping = False
+    scraping = True
     report = False
-    loader = True
+    loader = False
     card_scraping = fetchone(Card, name='Домашнее задание', deadline_date='07.05.2023')
     if card_scraping is None:
         raise Exception("Карточка не найдена")
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         load_person('template/persons-4.csv')
         load_cards('template/cards-4.csv')
 
-    # cards = fetchall(Card)
-    # for c in cards:
-    #     datatime = c.deadline_date + ' ' + c.deadline_time
-    #     update(c, ts_deadline=string_to_timestamp(datatime, "%d.%m.%Y %H:%M"))
+    cards = fetchall(Card)
+    for c in cards:
+        datatime = c.deadline_date + ' ' + c.deadline_time
+        update(c, ts_deadline=string_to_timestamp(datatime, "%d.%m.%Y %H:%M"))
