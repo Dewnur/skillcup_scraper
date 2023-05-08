@@ -8,9 +8,9 @@ from word_report_generator import WordReportGenerator
 # TODO: Перед запуском новой партии обновить даты и ts у карточек
 
 if __name__ == "__main__":
-    scraping = True
-    report = True
-    loader = False
+    scraping = False
+    report = False
+    loader = True
     card_scraping = fetchone(Card, name='Домашнее задание', deadline_date='07.05.2023')
     if card_scraping is None:
         raise Exception("Карточка не найдена")
